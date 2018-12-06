@@ -1,8 +1,12 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
 import           Data.Monoid (mappend)
+import           Data.Maybe (fromMaybe, listToMaybe)
+import           Control.Monad ((<=<))
+import           Data.List (stripPrefix)
 import           Hakyll
 
+import           Data.List.Split
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -26,6 +30,14 @@ main = hakyll $ do
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/post.html"    postCtx
             >>= loadAndApplyTemplate "templates/default.html" postCtx
+            >>= relativizeUrls
+
+    create ["course-info/algebra/winter2019/index.markdown"] $ do
+        route $ composeRoutes (gsubRoute "course-info/" $ const "") (setExtension "html")
+        compile $ do
+          let courseDesc = "a student-organized group theory course at the UW during Winter 2019."
+          pandocCompiler
+            >>= loadAndApplyTemplate "templates/course-info.html" (courseInfoCtx courseDesc)
             >>= relativizeUrls
 
     create ["archive.html"] $ do
@@ -66,3 +78,7 @@ postCtx =
     dateField "date" "%B %e, %Y" `mappend`
     defaultContext
 
+courseInfoCtx :: String -> Context String
+courseInfoCtx courseDesc =
+  defaultContext `mappend`
+  constField "class" courseDesc
